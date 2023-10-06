@@ -34,7 +34,7 @@ services:
       unless-stopped
     # change local port number if needed. Keep container port (8787) the same.
     ports:
-      - 9998:8787
+      - 3334:8787
     env_file: .env
 
 volumes:

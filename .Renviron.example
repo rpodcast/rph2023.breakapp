@@ -1,0 +1,3 @@
+AUTH0_USER="auth-tenant-id"  # Note that this is tenant, not your login ID
+AUTH0_KEY="myauthkey..."
+AUTH0_SECRET="myauthsecret"
