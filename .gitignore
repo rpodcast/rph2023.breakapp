@@ -10,3 +10,7 @@
 .devcontainer/.rstudio_config/*
 !.devcontainer/.rstudio_config/README.md
 .env
+
+# additional files
+dev/prototyping/*
+!dev/prototyping/README.md

@@ -1,0 +1,1 @@
+Use this directory to store files that are not version-controlled, such as misc scripts for trying a new capability or feature.
