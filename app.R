@@ -5,4 +5,6 @@
 pkgload::load_all(export_all = FALSE,helpers = FALSE,attach_testthat = FALSE)
 options( "golem.app.prod" = TRUE)
 options("shiny.port" = 2556)
-rph2023.breakapp::run_app_auth0() # add parameters here (if any)
+options(auth0_disable = FALSE)
+options(auth0_config_file = system.file("app/_auth0.yml", package = "rph2023.breakapp"))
+rph2023.breakapp::run_app() # add parameters here (if any)
