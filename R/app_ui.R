@@ -10,7 +10,8 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("rph2023.breakapp")
+      h1("rph2023.breakapp"),
+      mod_auth_info_ui("auth_info_1")
     )
   )
 }
