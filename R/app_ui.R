@@ -10,8 +10,43 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     fluidPage(
-      h1("rph2023.breakapp"),
-      mod_auth_info_ui("auth_info_1")
+      #mod_auth_info_ui("auth_info_1")
+      h1("Escape the RPH2023"),
+      
+      tabsetPanel(
+        id = 'tabs',
+        type = 'hidden',
+
+        # welcome tab
+        tabPanel(
+          title = 'Welcome to the escape room',
+          value = "intro",
+          column(
+            width = 10,
+            shiny::img(src = 'www/images/intro.jpeg')
+          ),
+          column(
+            width = 2,
+            actionButton(
+              'start',
+              label = 'Start',
+              icon = shiny::icon('hourglass-start')
+            ),
+            actionButton(
+              'info',
+              label = 'Instructions',
+              icon = shiny::icon('info')
+            ),
+            mod_auth_info_ui("auth_info_1")
+          )
+        ),
+
+        # time display
+        footer = tagList(
+          textOutput('time_message'),
+          actionButton("submit", label = "Submit")
+        )
+      )
     )
   )
 }
