@@ -25,5 +25,5 @@ RUN apt-get update \
 
 # install R package dependencies
 # add / remove packages from line below (but keep httpgd, renv, languageserver
-RUN install2.r renv httpgd languageserver golem shiny bslib DBI RPostgres dm dplyr tidyr purrr fs jsonlite auth0
+RUN install2.r renv httpgd languageserver golem shiny bslib DBI RPostgres dm dplyr tidyr purrr fs jsonlite auth0 DT reactable attachment dockerfiler pool
 
