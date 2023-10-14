@@ -10,7 +10,7 @@
 mod_auth_info_ui <- function(id){
   ns <- NS(id)
   tagList(
-    auth0::logoutButton(),
+    #auth0::logoutButton(),
     verbatimTextOutput(ns("user_info"))
   )
 }
@@ -22,8 +22,33 @@ mod_auth_info_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
+    user_info <- reactive({
+      if (!is.null(session$userData$auth0_info)) {
+        info <- session$userData$auth0_info
+      } else {
+        info <- list(
+          sub = "devaccount|8675309",
+          nickname = "the_blue_robot",
+          name = "MegaMan",
+          picture = "https://shinydevseries-assets.us-east-1.linodeobjects.com/megaman.png"
+        )
+      }
+
+      return(info)
+    })
+
     output$user_info <- renderPrint({
-      session$userData$auth0_info
+      user_info()
+    })
+
+    # return user metadata
+    reactive({
+      req(user_info())
+      list(
+        user_nickname = user_info()$sub,
+        user_name = user_info()$name,
+        user_picture = user_info()$picture
+      )
     })
  
   })
