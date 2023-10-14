@@ -1,0 +1,32 @@
+[
+  {
+    "id": "puzzle1",
+    "titleText": "Who is the creator of Linux?",
+    "image_filename": "puzzle1_dev.jpeg",
+    "clues": {
+      "clue1": "A certain blanket-loving character in Peanuts shares his name",
+      "clue2": "This person can be a bit candid with his opinions",
+      "clue3": "They are also credited for inventing the Git version control system"
+    },
+    "answers": {
+      "answer": "Linus Torvalds",
+      "label": "Enter answer"
+    },
+    "includeTablePuzzle": false
+  },
+  {
+    "id": "puzzle2",
+    "titleText": "Here is a really long question title text that doesn't really mean anything. But I have to type a long time. What is the best sport?",
+    "image_filename": "puzzle2_dev.jpeg",
+    "clues": {
+      "clue1": "This sport can get a little chilly",
+      "clue2": "Only one position is allowed to actually catch the object meant for scoring",
+      "clue3": "The championship trophy is one of the most revered in the entire sports landscape"
+    },
+    "answers": {
+      "answer": "Hockey",
+      "label": "Enter answer"
+    },
+    "includeTablePuzzle": true
+  }
+]
