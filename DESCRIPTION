@@ -7,10 +7,20 @@ Description: What the package does (one paragraph).
 License: What license is it under?
 Imports: 
     auth0,
+    base64enc,
     config (>= 0.3.2),
+    DBI,
+    dplyr,
+    DT,
+    glue,
     golem (>= 0.4.1),
-    pkgload,
-    shiny (>= 1.7.5)
+    jsonlite,
+    lubridate,
+    pool,
+    purrr,
+    RPostgres,
+    shiny (>= 1.7.5),
+    stringr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
