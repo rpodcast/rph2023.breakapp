@@ -2,9 +2,13 @@ default:
   golem_name: rph2023.breakapp
   golem_version: 0.0.0.9000
   app_prod: no
+  quiz_time: 60
+  db_type: LOCAL
 
 production:
   app_prod: yes
+  quiz_time: 1200
+  db_type: SERVER
 
 dev:
   golem_wd: !expr golem::pkg_path()
