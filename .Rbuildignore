@@ -13,3 +13,6 @@ $run_dev.*
 ^app\.R$
 ^rsconnect$
 ^Dockerfile$
+^\.Renviron\.example
+CODE_OF_CONDUCT\.md
+^LICENSE\.md$

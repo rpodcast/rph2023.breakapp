@@ -44,3 +44,49 @@ Before proceeding with the database operations, ensure the following requirement
 
 To initialize the database tables, use the `dev/initialize_db_tables.R` script. To switch between development and production mode, uncomment the appropriate `Sys.setenv()` calls as noted in the script.
 
+## Deployment container instructions
+
+In the `dev/03_deploy.R` script, run the `golem::add_dockerfile_with_renv(output_dir = 'dev/deploy')` function that will produce a directory with two docker build files corresponding to two images:
+
+* `Dockerfile_base`: Image that installs required system dependencies and R packages using `renv`.
+* `Dockerfile`: Image that adds on top of the image created in `Dockerfile_base` to restore the package library from `renv`, install the app's package tar file, and run the app process in a command line call to R itself.
+
+Note: Need to add another option declaration in the run app line: 
+
+```
+auth0_config_file = system.file('app/_auth0.yml', package = 'rph2023.breakapp')
+
+auth0_disable = FALSE
+```
+
+Hence the run line looks like this:
+
+```
+CMD R -e "options('shiny.port'=80,shiny.host='0.0.0.0',auth0_config_file = system.file('app/_auth0.yml', package = 'rph2023.breakapp'),auth0_disable = FALSE);library(rph2023.breakapp);rph2023.breakapp::run_app()"
+```
+
+Building first image:
+
+```
+docker build -f Dockerfile_base --progress=plain -t rpodcast/rph2023.breakapp_base .
+```
+
+Push to Docker Hub:
+
+```
+docker push rpodcast/rph2023.breakapp_base
+```
+
+Building second image:
+
+```
+docker build -f Dockerfile --progress=plain -t rpodcast/rph2023.breakapp:latest .
+```
+
+Push to Docker Hub:
+
+```
+docker push rpodcast/rph2023.breakapp
+```
+
+
