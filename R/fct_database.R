@@ -7,7 +7,7 @@
 #' @noRd
 db_con <- function() {
   # define appropriate env variable names based on prod status
-  if (golem::app_prod()) {
+  if (Sys.getenv("R_CONFIG_ACTIVE") == "production") {
     env_string <- "SERVER"
   } else {
     env_string <- "LOCAL"
