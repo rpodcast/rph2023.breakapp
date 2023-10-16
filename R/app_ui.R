@@ -3,48 +3,57 @@
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import bslib
 #' @noRd
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(
-      #mod_auth_info_ui("auth_info_1")
-      h1("Escape the RPH2023"),
-      
-      tabsetPanel(
-        id = 'tabs',
-        type = 'hidden',
+    page_navbar(
+      title = "RPH2023 Escape App",
+      id = "navbar",
+      inverse = FALSE,
 
-        # welcome tab
-        tabPanel(
-          title = 'Welcome to the escape room',
-          value = "intro",
-          column(
-            width = 10,
-            shiny::img(src = 'www/images/intro.jpeg')
-          ),
-          column(
-            width = 2,
-            actionButton(
-              'start',
-              label = 'Start',
-              icon = shiny::icon('hourglass-start')
-            ),
-            actionButton(
-              'info',
-              label = 'Instructions',
-              icon = shiny::icon('info')
-            ),
-            mod_auth_info_ui("auth_info_1")
+      nav_panel(
+        title = "The Room",
+        value = 'intro',
+        navset_hidden(
+          id = 'tabs',
+          nav_panel_hidden(
+            value = "intro",
+            card(
+              full_screen = FALSE,
+              card_body(
+                h2("Welcome to the Escape Room"),
+                shiny::img(src = 'www/images/intro.jpeg')
+              )
+            )
           )
-        ),
-
-        # time display
-        footer = tagList(
-          textOutput('time_message'),
-          actionButton("submit", label = "Submit")
+          
+          # footer = tagList(
+          #   actionButton("submit", label = "Submit")
+          # )
+        )
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('time_message')
+      ),
+      # nav_spacer(),
+      # nav_item(
+      #   actionButton(
+      #     'start',
+      #     label = 'Start',
+      #     icon = shiny::icon('hourglass-start')
+      #   )
+      # ),
+      nav_spacer(),
+      nav_item(
+        actionButton(
+          'info',
+          label = 'Instructions',
+          icon = shiny::icon('info')
         )
       )
     )

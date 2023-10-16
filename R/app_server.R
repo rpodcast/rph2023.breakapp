@@ -3,6 +3,7 @@
 #' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import bslib
 #' @noRd
 app_server <- function(input, output, session) {
   # establish database connection
@@ -32,41 +33,80 @@ app_server <- function(input, output, session) {
   observeEvent(start_app(), {
     purrr::walk(question_vec, ~{
       quiz_sub <- dplyr::slice(quiz_df, .x)
-      
-      insertTab(
-        inputId = "tabs",
-        tabPanel(
-          title = glue::glue("Tab {.x}"),
+
+      nav_insert(
+        id = "tabs",
+        nav_panel_hidden(
           value = glue::glue("puzzle{.x}_tab"),
-          mod_puzzle_viewer_ui(
-            glue::glue("puzzle_viewer_{.x}"),
-            titleText = quiz_sub$titletext,
-            puzzleImageSrc = extract_image_file(quiz_sub$image_blob, quiz_sub$image_filename)
+          card(
+            full_screen = FALSE,
+            fill = FALSE,
+            card_body(
+              h2(quiz_sub$titletext),
+              mod_puzzle_viewer_ui(
+                glue::glue("puzzle_viewer_{.x}"),
+                titleText = quiz_sub$titletext,
+                puzzleImageSrc = extract_image_file(quiz_sub$image_blob, quiz_sub$image_filename)
+              )
+            )
           )
         )
       )
     })
 
     # insert puzzle end tabs
-    insertTab(
-      inputId = "tabs",
-      tabPanel(
-        title = 'End',
+    nav_insert(
+      id = "tabs",
+      position = "after",
+      nav_panel_hidden(
         value = "end",
-        position = "after",
-        shiny::h1("Congratulations you escaped..."),
-        shiny::img(src = "www/images/end.jpeg")
+        card(
+          full_screen = FALSE,
+          card_body(
+            shiny::h2("The End"),
+            shiny::img(src = "www/images/end.jpeg")
+          )
+        )
       )
     )
 
-    insertTab(
-      inputId = "tabs",
-      tabPanel(
-        title = 'Fail',
+    nav_insert(
+      id = "tabs",
+      position = "after",
+      nav_panel_hidden(
         value = "fail",
-        position = "after",
-        shiny::h1("Sorry, you did not escape"),
-        shiny::img(src = "www/images/fail.jpeg")
+        card_body(
+          shiny::h2("Fail"),
+          shiny::img(src = "www/images/fail.jpeg")
+        )
+      )
+    )
+
+    shiny::showModal(
+      shiny::modalDialog(
+        title = "Instructions for the escape room",
+        shiny::p(
+          glue::glue("Once you click 'Start' you will have {get_golem_config('quiz_time') / 60} minutes to solve a set of puzzles.")
+        ),
+        shiny::p(
+          "Each puzzles requires a number or word to be entered.  
+          If correct, a new puzzle will be presented or you will escape the room.  
+          If incorrect, nothing will happen."
+        ),
+        shiny::p(
+          "You can use (and will need to use) the internet to help solve some puzzles."
+        ),
+        size = c("m"), # could try "s"
+        easyClose = TRUE,
+        fade = TRUE,
+        footer = tagList(
+          actionButton(
+            inputId = 'start',
+            label = 'Start',
+            icon = shiny::icon('hourglass-start')
+          ),
+          modalButton("Get me out of here!")
+        )
       )
     )
   })
@@ -81,35 +121,43 @@ app_server <- function(input, output, session) {
     quiz_sub <- dplyr::slice(quiz_df, .x)
     mod_puzzle_viewer_server(
       glue::glue("puzzle_viewer_{.x}"),
+      con = con,
+      user_info = user_info,
+      timer = timer,
+      question_time,
+      session_timestamp = session_timestamp,
       clues = extract_clues(quiz_sub$clues),
       answer = extract_answer(quiz_sub$answers),
       question_id = quiz_sub$id,
-      includeTablePuzzle = quiz_sub$includetablepuzzle
+      parent_session = session,
+      current_tab = current_tab,
+      n_questions = n_questions
+      #includeTablePuzzle = quiz_sub$includetablepuzzle
     )
   })
 
   # display instructions when requested
-  observeEvent(input$info, {
-    shiny::showModal(
-      shiny::modalDialog(
-        title = "Instructions for the escape room",
-        shiny::p(
-        glue::glue("Once you click 'Start' you will have {get_golem_config('quiz_time') / 60} minutes to solve a set of puzzles.")
-        ),
-        shiny::p(
-          "Each puzzles requires a number or word to be entered.  
-          If correct, a new puzzle will be presented or you will escape the room.  
-          If incorrect, nothing will happen."
-        ),
-        shiny::p(
-          "You can use (and will need to use) the internet to help solve some puzzles."
-        ),
-        size = c("m"), # could try "s"
-        easyClose = TRUE,
-        fade = TRUE
-      )
-    )
-  })
+  # observeEvent(input$info, {
+  #   shiny::showModal(
+  #     shiny::modalDialog(
+  #       title = "Instructions for the escape room",
+  #       shiny::p(
+  #         glue::glue("Once you click 'Start' you will have {get_golem_config('quiz_time') / 60} minutes to solve a set of puzzles.")
+  #       ),
+  #       shiny::p(
+  #         "Each puzzles requires a number or word to be entered.  
+  #         If correct, a new puzzle will be presented or you will escape the room.  
+  #         If incorrect, nothing will happen."
+  #       ),
+  #       shiny::p(
+  #         "You can use (and will need to use) the internet to help solve some puzzles."
+  #       ),
+  #       size = c("m"), # could try "s"
+  #       easyClose = TRUE,
+  #       fade = TRUE
+  #     )
+  #   )
+  # })
 
   # run the timer when quiz begins
   observe({
@@ -126,10 +174,9 @@ app_server <- function(input, output, session) {
               "Countdown completed!"
             )
           )
-          updateTabsetPanel(
-            session = session, 
-            inputId = 'tabs', 
-            selected = 'fail'
+          nav_select(
+            id = "tabs",
+            selected = "fail"
           )
         }
       }
@@ -143,55 +190,63 @@ app_server <- function(input, output, session) {
 
   # when user clicks begin button move to first puzzle
   observeEvent(input$start, {
+    removeModal()
+    
     # start timer
     active(TRUE)
     
     # move to puzzle 1
-    updateTabsetPanel(
-      inputId = 'tabs', 
-      selected = 'puzzle1_tab'
+    nav_select(
+      id = "tabs",
+      selected = "puzzle1_tab"
     )
   })
 
-  # move to next puzzle on submit if answer is correct
-  observeEvent(input$submit, {
-    req(current_tab())
-    if (!current_tab() %in% c('intro', 'fail', 'end')) {
-      tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
-
-      if (answers_res[[tab_number]]$correct_ind()) {
-        # move to end of puzzle if answered last question
-        if (tab_number == n_questions) {
-          next_tab <- 'end'
-          quiz_complete <- TRUE
-          active(FALSE)
-        } else {
-          next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
-          quiz_complete <- FALSE
-        }
-
-        # send user answer data to database
-        add_user_data(
-          con,
-          user_nickname = user_info()$user_nickname,
-          user_name = user_info()$user_name,
-          user_picture = user_info()$user_picture,
-          session_timestamp = session_timestamp(),
-          question_id = answers_res[[tab_number]]$question_id,
-          question_time = question_time(),
-          overall_time = get_golem_config("quiz_time") - timer(),
-          help_count = answers_res[[tab_number]]$help_count(),
-          quiz_complete = quiz_complete
-        )
-
-        # reset individual question elapsed time
-        question_time(0)
-
-        updateTabsetPanel(
-          inputId = 'tabs',
-          selected = next_tab
-        )
-      }
+  observeEvent(current_tab(), {
+    if (current_tab() %in% c('fail', 'end')) {
+      active(FALSE)
     }
   })
+
+  # move to next puzzle on submit if answer is correct
+  # observeEvent(input$submit, {
+  #   req(current_tab())
+  #   if (!current_tab() %in% c('intro', 'fail', 'end')) {
+  #     tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+  #     if (answers_res[[tab_number]]$correct_ind()) {
+  #       # move to end of puzzle if answered last question
+  #       if (tab_number == n_questions) {
+  #         next_tab <- 'end'
+  #         quiz_complete <- TRUE
+  #         active(FALSE)
+  #       } else {
+  #         next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+  #         quiz_complete <- FALSE
+  #       }
+
+  #       # send user answer data to database
+  #       add_user_data(
+  #         con,
+  #         user_nickname = user_info()$user_nickname,
+  #         user_name = user_info()$user_name,
+  #         user_picture = user_info()$user_picture,
+  #         session_timestamp = session_timestamp(),
+  #         question_id = answers_res[[tab_number]]$question_id,
+  #         question_time = question_time(),
+  #         overall_time = get_golem_config("quiz_time") - timer(),
+  #         help_count = answers_res[[tab_number]]$help_count(),
+  #         quiz_complete = quiz_complete
+  #       )
+
+  #       # reset individual question elapsed time
+  #       question_time(0)
+
+  #       nav_select(
+  #         id = "tabs",
+  #         selected = next_tab
+  #       )
+  #     }
+  #   }
+  # })
 }

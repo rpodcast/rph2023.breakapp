@@ -10,46 +10,73 @@
 mod_puzzle_viewer_ui <- function(
   id,
   titleText = "Example Puzzle",
-  puzzleImageSrc = app_sys("app/www/images/exampleImg.jpg")
+  puzzleImageSrc = app_sys("app/www/images/exampleImg.jpg"),
+  includeTablePuzzle = FALSE
 ) {
 
   ns <- NS(id)
   tagList(
-    shiny::fluidRow(
-      shiny::column(
-        width = 12,
-        shiny::h2(titleText)
+    tags$div(
+      #style = "width: 50%; height: auto;",
+      shiny::img(
+        src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg")
       )
     ),
-    shiny::fluidRow(
-      shiny::column(
-        width = 8,
-        shiny::img(
-          src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg"),
-          height="100%",
-          width="100%"
-        ),
+    if (includeTablePuzzle) {
+      layout_columns(
         # for some puzzles we have a reactable
         DT::DTOutput(
-          outputId = ns("tablePuzzle"), 
-          height="75%", 
-          width="75%"
-        )
-      ),
-      shiny::column(
-        width = 4,
-        # UI where they will answer the puzzle
-        shiny::uiOutput(
-          outputId = ns("answerUI")
-        ),
-        # Helper - penalizes time score by 5 mins?
-        shiny::actionButton(
-          inputId = ns("help"), 
-          label = "Hint", 
-          icon = shiny::icon("circle-question")
+          outputId = ns("tablePuzzle")
+          #height="75%",
+          #width="75%"
         )
       )
+    },
+
+    layout_columns(
+      uiOutput(
+        outputId = ns("answerUI")
+      ),
+      actionButton(
+        ns("submit"),
+        label = "Submit"
+      ),
+      actionButton(
+        inputId = ns("help"),
+        label = "Hint",
+        icon = shiny::icon("circle-question")
+      )
     )
+
+    # shiny::fluidRow(
+    #   shiny::column(
+    #     width = 8,
+    #     shiny::img(
+    #       src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg"),
+    #       height="100%",
+    #       width="100%"
+    #     ),
+    #     # for some puzzles we have a reactable
+    #     DT::DTOutput(
+    #       outputId = ns("tablePuzzle"), 
+    #       height="75%", 
+    #       width="75%"
+    #     )
+    #   ),
+    #   shiny::column(
+    #     width = 4,
+    #     # UI where they will answer the puzzle
+    #     shiny::uiOutput(
+    #       outputId = ns("answerUI")
+    #     ),
+    #     # Helper - penalizes time score by 5 mins?
+    #     shiny::actionButton(
+    #       inputId = ns("help"), 
+    #       label = "Hint", 
+    #       icon = shiny::icon("circle-question")
+    #     )
+    #   )
+    # )
   )
 }
     
@@ -58,9 +85,17 @@ mod_puzzle_viewer_ui <- function(
 #' @noRd 
 mod_puzzle_viewer_server <- function(
   id,
+  con,
+  user_info,
+  timer,
+  question_time,
+  session_timestamp,
   clues,
   answer,
   question_id,
+  parent_session,
+  current_tab,
+  n_questions,
   includeTablePuzzle = FALSE
   ){
   moduleServer( id, function(input, output, session){
@@ -69,14 +104,15 @@ mod_puzzle_viewer_server <- function(
     # define reactive values
     # listen to help and track number of times clicked
     helpCount <- reactiveVal(0)
+    quiz_complete <- reactiveVal(FALSE)
 
     # create user input for answering puzzle
     output$answerUI <- shiny::renderUI(
       tagList(
-        shiny::h2("Answer: "),
         textInput(
-          inputId = ns("answer"), 
-          label = answer$label,
+          inputId = ns("answer"),
+          label = NULL,
+          placeholder = "Enter your answer here"
         )
       )
     )
@@ -126,6 +162,47 @@ mod_puzzle_viewer_server <- function(
           fade = TRUE
         )
       )
+    })
+
+    observeEvent(input$submit, {
+      req(current_tab())
+      if (!current_tab() %in% c('intro', 'fail', 'end')) {
+        tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+        if (correct_ind()) {
+          # move to end of puzzle if answered last question
+          if (tab_number == n_questions) {
+            next_tab <- 'end'
+            quiz_complete(TRUE)
+          } else {
+            next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+            quiz_complete(FALSE)
+          }
+
+          # send user answer data to database
+          add_user_data(
+            con,
+            user_nickname = user_info()$user_nickname,
+            user_name = user_info()$user_name,
+            user_picture = user_info()$user_picture,
+            session_timestamp = session_timestamp(),
+            question_id = question_id,
+            question_time = question_time(),
+            overall_time = get_golem_config("quiz_time") - timer(),
+            help_count = helpCount(),
+            quiz_complete = quiz_complete()
+          )
+
+          # reset individual question elapsed time
+          question_time(0)
+
+          nav_select(
+            session = parent_session,
+            id = "tabs",
+            selected = next_tab
+          )
+        }
+      }
     })
 
     # return answer status
