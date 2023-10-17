@@ -34,9 +34,7 @@ mod_puzzle_viewer_ui <- function(
     },
 
     layout_columns(
-      uiOutput(
-        outputId = ns("answerUI")
-      ),
+      uiOutput(ns("answerUI")),
       actionButton(
         ns("submit"),
         label = "Submit"
@@ -46,37 +44,11 @@ mod_puzzle_viewer_ui <- function(
         label = "Hint",
         icon = shiny::icon("circle-question")
       )
-    )
+    ),
 
-    # shiny::fluidRow(
-    #   shiny::column(
-    #     width = 8,
-    #     shiny::img(
-    #       src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg"),
-    #       height="100%",
-    #       width="100%"
-    #     ),
-    #     # for some puzzles we have a reactable
-    #     DT::DTOutput(
-    #       outputId = ns("tablePuzzle"), 
-    #       height="75%", 
-    #       width="75%"
-    #     )
-    #   ),
-    #   shiny::column(
-    #     width = 4,
-    #     # UI where they will answer the puzzle
-    #     shiny::uiOutput(
-    #       outputId = ns("answerUI")
-    #     ),
-    #     # Helper - penalizes time score by 5 mins?
-    #     shiny::actionButton(
-    #       inputId = ns("help"), 
-    #       label = "Hint", 
-    #       icon = shiny::icon("circle-question")
-    #     )
-    #   )
-    # )
+    layout_columns(
+      uiOutput(ns("prev_answers_display"))
+    )
   )
 }
     
@@ -104,6 +76,14 @@ mod_puzzle_viewer_server <- function(
     # define reactive values
     # listen to help and track number of times clicked
     helpCount <- reactiveVal(0)
+
+    # track number of attempts
+    attempts <- reactiveVal(0)
+
+    # track incorrect answers already entered
+    prev_answers <- reactiveVal(NULL)
+
+    # escape room as complete or not
     quiz_complete <- reactiveVal(FALSE)
 
     # create user input for answering puzzle
@@ -112,10 +92,18 @@ mod_puzzle_viewer_server <- function(
         textInput(
           inputId = ns("answer"),
           label = NULL,
-          placeholder = "Enter your answer here"
+          placeholder = "Enter answer here"
         )
       )
     )
+
+    output$prev_answers_display <- shiny::renderUI({
+      req(prev_answers())
+      tagList(
+        p("Your previous incorrect attempts:"),
+        list_to_li(prev_answers())
+      )
+    })
 
     # reactive for answer status
     correct_ind <- reactive({
@@ -166,6 +154,10 @@ mod_puzzle_viewer_server <- function(
 
     observeEvent(input$submit, {
       req(current_tab())
+
+      # increment attempts
+      attempts(attempts() + 1)
+
       if (!current_tab() %in% c('intro', 'fail', 'end')) {
         tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
 
@@ -190,17 +182,35 @@ mod_puzzle_viewer_server <- function(
             question_time = question_time(),
             overall_time = get_golem_config("quiz_time") - timer(),
             help_count = helpCount(),
+            attempts = attempts(),
             quiz_complete = quiz_complete()
           )
 
           # reset individual question elapsed time
           question_time(0)
 
+          # send notification to user
+          shinypop::noty(text = "Correct answer!", timeout = 500, type= "success", layout = "center", killer = TRUE)
+
+          # switch to next tab in escape room tab panel
           nav_select(
             session = parent_session,
             id = "tabs",
             selected = next_tab
           )
+        } else {
+          # track incorrect answer
+          prev_answers(c(prev_answers(), input$answer))
+
+          # clear the answer text input
+          updateTextInput(
+            session = session,
+            inputId = "answer",
+            value = "",
+            placeholder = "Enter answer here"
+          )
+          # send notification to user
+          shinypop::noty(text = "Incorrect! Try again...", timeout = 1000, type= "error", layout = "center", killer = TRUE)
         }
       }
     })
