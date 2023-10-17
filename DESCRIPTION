@@ -23,6 +23,8 @@ Imports:
     shiny (>= 1.7.5),
     shinypop,
     stringr
+Remotes:
+    dreamRs/shinypop
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
