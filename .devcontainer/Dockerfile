@@ -27,3 +27,5 @@ RUN apt-get update \
 # add / remove packages from line below (but keep httpgd, renv, languageserver
 RUN install2.r renv httpgd languageserver golem shiny bslib DBI RPostgres dm dplyr tidyr purrr fs jsonlite auth0 DT reactable attachment dockerfiler pool
 
+# install R packages only available on GitHub
+RUN installGithub.r dreamRs/shinypop
