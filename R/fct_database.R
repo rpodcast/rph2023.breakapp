@@ -46,6 +46,7 @@ create_user_table <- function(
       question_time VARCHAR,
       overall_time VARCHAR,
       help_count NUMERIC,
+      attempts NUMERIC,
       quiz_complete BOOLEAN
     );")
   )
@@ -144,11 +145,12 @@ add_user_data <- function(
   question_time,
   overall_time,
   help_count,
+  attempts,
   quiz_complete,
   table_name = "userdata"
 ) {
 
-  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, question_id, question_time, overall_time, help_count, quiz_complete)
+  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, question_id, question_time, overall_time, help_count, attempts, quiz_complete)
   VALUES(
     {user_nickname},
     {user_name},
@@ -158,6 +160,7 @@ add_user_data <- function(
     {question_time},
     {overall_time},
     {help_count},
+    {attempts},
     {quiz_complete}
   );"
 
