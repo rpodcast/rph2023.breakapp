@@ -30,31 +30,11 @@ app_ui <- function(request) {
               )
             )
           )
-          
-          # footer = tagList(
-          #   actionButton("submit", label = "Submit")
-          # )
         )
       ),
       nav_spacer(),
       nav_item(
         textOutput('time_message')
-      ),
-      # nav_spacer(),
-      # nav_item(
-      #   actionButton(
-      #     'start',
-      #     label = 'Start',
-      #     icon = shiny::icon('hourglass-start')
-      #   )
-      # ),
-      nav_spacer(),
-      nav_item(
-        actionButton(
-          'info',
-          label = 'Instructions',
-          icon = shiny::icon('info')
-        )
       )
     )
   )

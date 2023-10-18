@@ -24,10 +24,19 @@ app_server <- function(input, output, session) {
   timer <- reactiveVal(get_golem_config("quiz_time"))
   question_time <- reactiveVal(0)
   active <- reactiveVal(FALSE)
+  show_result <- reactiveVal(FALSE)
   session_timestamp <- reactiveVal(Sys.time())
 
   # execute authentication information module
   user_info <- mod_auth_info_server("auth_info_1")
+
+  # reactive for user check
+  user_exists <- reactive({
+    req(user_info()$user_nickname)
+
+    res <- check_user_exists(con, user_info()$user_nickname)
+    return(res)
+  })
 
   # dynamically insert puzzle question UIs as new tabs
   observeEvent(start_app(), {
@@ -63,8 +72,7 @@ app_server <- function(input, output, session) {
         card(
           full_screen = FALSE,
           card_body(
-            shiny::h2("The End"),
-            shiny::img(src = "www/images/end.jpeg")
+            mod_puzzle_conclusion_ui("puzzle_conclusion_end", type = "end")
           )
         )
       )
@@ -75,46 +83,68 @@ app_server <- function(input, output, session) {
       position = "after",
       nav_panel_hidden(
         value = "fail",
-        card_body(
-          shiny::h2("Fail"),
-          shiny::img(src = "www/images/fail.jpeg")
+        card(
+          full_screen = FALSE,
+          card_body(
+            mod_puzzle_conclusion_ui("puzzle_conclusion_fail", type = "fail")
+          )
         )
       )
     )
 
-    shiny::showModal(
-      shiny::modalDialog(
-        title = "Instructions for the escape room",
-        shiny::p(
-          glue::glue("Once you click 'Start' you will have {get_golem_config('quiz_time') / 60} minutes to solve a set of puzzles.")
-        ),
-        shiny::p(
-          "Each puzzles requires a number or word to be entered.  
-          If correct, a new puzzle will be presented or you will escape the room.  
-          If incorrect, nothing will happen."
-        ),
-        shiny::p(
-          "You can use (and will need to use) the internet to help solve some puzzles."
-        ),
-        size = c("m"), # could try "s"
-        easyClose = TRUE,
-        fade = TRUE,
-        footer = tagList(
-          actionButton(
-            inputId = 'start',
-            label = 'Start',
-            icon = shiny::icon('hourglass-start')
+    # check if user exists already. If yes, show the wrap-up tab
+    if (user_exists()) {
+      if (check_quiz_complete(con, user_nickname = user_info()$user_nickname)) {
+        next_tab <- 'end'
+      } else {
+        next_tab <- 'fail'
+      }
+
+      show_result(TRUE)
+
+      nav_select(
+        id = "tabs",
+        selected = next_tab
+      )
+    } else {
+      shiny::showModal(
+        shiny::modalDialog(
+          title = "Instructions for the escape room",
+          shiny::p(
+            glue::glue("Once you click 'Start' you will have {get_golem_config('quiz_time') / 60} minutes to solve a set of puzzles.")
           ),
-          modalButton("Get me out of here!")
+          shiny::p(
+            "Each puzzles requires a number or word to be entered.  
+            If correct, a new puzzle will be presented or you will escape the room.  
+            If incorrect, nothing will happen."
+          ),
+          shiny::p(
+            "You can use (and will need to use) the internet to help solve some puzzles."
+          ),
+          size = c("m"), # could try "s"
+          easyClose = TRUE,
+          fade = TRUE,
+          footer = tagList(
+            actionButton(
+              inputId = 'start',
+              label = 'Start',
+              icon = shiny::icon('hourglass-start')
+            ),
+            modalButton("Get me out of here!")
+          )
         )
       )
-    )
+    }
   })
 
   # reactive for current tab selected
   current_tab <- reactive({
     input$tabs
   })
+
+  # execute server-side puzzle end/fail modules
+  mod_puzzle_conclusion_server("puzzle_conclusion_end", con, user_info, show_result)
+  mod_puzzle_conclusion_server("puzzle_conclusion_fail", con, user_info, show_result)
 
   # execute server-side puzzle question modules
   answers_res <- purrr::map(question_vec, ~{
@@ -132,9 +162,10 @@ app_server <- function(input, output, session) {
       parent_session = session,
       current_tab = current_tab,
       n_questions = n_questions
-      #includeTablePuzzle = quiz_sub$includetablepuzzle
     )
   })
+
+
 
   # display instructions when requested
   # observeEvent(input$info, {
@@ -205,6 +236,7 @@ app_server <- function(input, output, session) {
   observeEvent(current_tab(), {
     if (current_tab() %in% c('fail', 'end')) {
       active(FALSE)
+      show_result(TRUE)
     }
   })
 
