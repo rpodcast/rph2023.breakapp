@@ -127,6 +127,15 @@ download_quiz_df <- function(con, table_name = "quizdata") {
   return(df)
 }
 
+download_user_df <- function(con, table_name = "userdata", user_nickname = NULL) {
+  df <- DBI::dbReadTable(con, table_name)
+  if (!is.null(user_nickname)) {
+    df <- dplyr::filter(df, user_nickname == !!user_nickname)
+  }
+
+  return(df)
+}
+
 extract_clues <- function(x) {
   jsonlite::fromJSON(x)
 }
@@ -167,4 +176,18 @@ add_user_data <- function(
   user_sql <- glue::glue_sql(user_query, .con = con)
 
   res <- DBI::dbExecute(con, user_sql)
+}
+
+check_user_exists <- function(con, user_nickname) {
+  df <- download_user_df(con)
+  user_nickname %in% df$user_nickname
+}
+
+check_quiz_complete <- function(con, user_nickname) {
+  df <- download_user_df(con)
+  quiz_complete <- df |>
+    dplyr::filter(user_nickname == !!user_nickname) |>
+    dplyr::pull(quiz_complete)
+
+  any(quiz_complete)
 }
