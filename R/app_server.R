@@ -25,6 +25,7 @@ app_server <- function(input, output, session) {
   question_time <- reactiveVal(0)
   active <- reactiveVal(FALSE)
   show_result <- reactiveVal(FALSE)
+  room_counter <- reactiveVal(0)
   session_timestamp <- reactiveVal(Sys.time())
 
   # execute authentication information module
@@ -93,7 +94,7 @@ app_server <- function(input, output, session) {
     )
 
     # check if user exists already. If yes, show the wrap-up tab
-    if (user_exists()) {
+    if (user_exists() & !get_golem_config("allow_multiple_attempts")) {
       if (check_quiz_complete(con, user_nickname = user_info()$user_nickname)) {
         next_tab <- 'end'
       } else {
@@ -165,7 +166,45 @@ app_server <- function(input, output, session) {
     )
   })
 
+  # track total number of hints used
+  total_hints <- reactive({
+    if (user_exists() & !get_golem_config("allow_multiple_attempts"))  {
+      df <- download_user_df(con, user_nickname = user_info()$user_nickname)
+      hints_total <- sum(df$help_count)
+    } else {
+      hints_vec <- purrr::map_int(question_vec, ~{
+        req(answers_res[[.x]]$help_count())
+        answers_res[[.x]]$help_count()
+      })
+      hints_total <- sum(hints_vec)
+    }
 
+    return(hints_total)
+  })
+
+  # track total number of incorrect answer attempts
+  total_incorrect <- reactive({
+    if (user_exists() & !get_golem_config("allow_multiple_attempts")) {
+      df <- download_user_df(con, user_nickname = user_info()$user_nickname)
+      attempts_total <- sum(df$attempts)
+    } else {
+      hints_vec <- purrr::map_int(question_vec, ~{
+        req(answers_res[[.x]]$attempts())
+        answers_res[[.x]]$attempts()
+      })
+      attempts_total <- sum(hints_vec)
+    }
+    return(attempts_total)
+  })
+
+  # subtract seconds from total time left
+  observeEvent(total_incorrect(), {
+    if (!user_exists() & get_golem_config("allow_multiple_attempts")) {
+      if (total_incorrect() > 0) {
+        timer(timer() - (get_golem_config("penalty_time") * total_incorrect()))
+      }
+    }
+  })
 
   # display instructions when requested
   # observeEvent(input$info, {
@@ -219,6 +258,18 @@ app_server <- function(input, output, session) {
     paste("Time left: ", lubridate::seconds_to_period(timer()))
   })
 
+  # render number of rooms solved
+  output$n_rooms <- renderText({
+    req(room_counter())
+    paste("Rooms solved: ", room_counter())
+  })
+
+  # render number of hints used
+  output$hints_message <- renderText({
+    req(total_hints())
+    paste("Hints used: ", total_hints())
+  })
+
   # when user clicks begin button move to first puzzle
   observeEvent(input$start, {
     removeModal()
@@ -237,48 +288,10 @@ app_server <- function(input, output, session) {
     if (current_tab() %in% c('fail', 'end')) {
       active(FALSE)
       show_result(TRUE)
+      room_counter(n_questions)
+    } else {
+      tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+      room_counter(tab_number - 1)
     }
   })
-
-  # move to next puzzle on submit if answer is correct
-  # observeEvent(input$submit, {
-  #   req(current_tab())
-  #   if (!current_tab() %in% c('intro', 'fail', 'end')) {
-  #     tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
-
-  #     if (answers_res[[tab_number]]$correct_ind()) {
-  #       # move to end of puzzle if answered last question
-  #       if (tab_number == n_questions) {
-  #         next_tab <- 'end'
-  #         quiz_complete <- TRUE
-  #         active(FALSE)
-  #       } else {
-  #         next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
-  #         quiz_complete <- FALSE
-  #       }
-
-  #       # send user answer data to database
-  #       add_user_data(
-  #         con,
-  #         user_nickname = user_info()$user_nickname,
-  #         user_name = user_info()$user_name,
-  #         user_picture = user_info()$user_picture,
-  #         session_timestamp = session_timestamp(),
-  #         question_id = answers_res[[tab_number]]$question_id,
-  #         question_time = question_time(),
-  #         overall_time = get_golem_config("quiz_time") - timer(),
-  #         help_count = answers_res[[tab_number]]$help_count(),
-  #         quiz_complete = quiz_complete
-  #       )
-
-  #       # reset individual question elapsed time
-  #       question_time(0)
-
-  #       nav_select(
-  #         id = "tabs",
-  #         selected = next_tab
-  #       )
-  #     }
-  #   }
-  # })
 }

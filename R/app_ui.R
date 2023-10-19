@@ -16,7 +16,7 @@ app_ui <- function(request) {
       inverse = FALSE,
 
       nav_panel(
-        title = "The Room",
+        title = "",
         value = 'intro',
         navset_hidden(
           id = 'tabs',
@@ -31,6 +31,14 @@ app_ui <- function(request) {
             )
           )
         )
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('n_rooms')
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('hints_message')
       ),
       nav_spacer(),
       nav_item(
