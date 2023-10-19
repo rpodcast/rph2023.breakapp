@@ -155,9 +155,6 @@ mod_puzzle_viewer_server <- function(
     observeEvent(input$submit, {
       req(current_tab())
 
-      # increment attempts
-      attempts(attempts() + 1)
-
       if (!current_tab() %in% c('intro', 'fail', 'end')) {
         tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
 
@@ -202,6 +199,9 @@ mod_puzzle_viewer_server <- function(
           # track incorrect answer
           prev_answers(c(prev_answers(), input$answer))
 
+          # increment attempts
+          attempts(attempts() + 1)
+
           # clear the answer text input
           updateTextInput(
             session = session,
@@ -220,7 +220,8 @@ mod_puzzle_viewer_server <- function(
       help_count = helpCount,
       correct_ind = correct_ind,
       user_answer = reactive(input$answer),
-      question_id = question_id
+      question_id = question_id,
+      attempts = attempts
     )
   })
 }
