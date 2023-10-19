@@ -40,7 +40,10 @@ app_server <- function(input, output, session) {
   })
 
   # dynamically insert puzzle question UIs as new tabs
-  observeEvent(start_app(), {
+  observeEvent(user_info()$user_nickname, {
+    req(user_info()$user_nickname)
+    # message("Starting app")
+    # message(user_info()$user_nickname)
     purrr::walk(question_vec, ~{
       quiz_sub <- dplyr::slice(quiz_df, .x)
 
@@ -93,7 +96,9 @@ app_server <- function(input, output, session) {
       )
     )
 
-    # check if user exists already. If yes, show the wrap-up tab
+    # check if user exists already
+    # - If yes, show the wrap-up tab and do not add additional record to database
+    # - If no, add event record of logging in to the app after they hit start
     if (user_exists() & !get_golem_config("allow_multiple_attempts")) {
       if (check_quiz_complete(con, user_nickname = user_info()$user_nickname)) {
         next_tab <- 'end'
@@ -273,6 +278,23 @@ app_server <- function(input, output, session) {
   # when user clicks begin button move to first puzzle
   observeEvent(input$start, {
     removeModal()
+
+    add_user_data(
+      con,
+      user_nickname = user_info()$user_nickname,
+      user_name = user_info()$user_name,
+      user_picture = user_info()$user_picture,
+      session_timestamp = session_timestamp(),
+      event_type = "start_session",
+      question_id = NA,
+      question_time = NA,
+      overall_time = NA,
+      hint_counter = NA,
+      attempt_counter = NA,
+      user_answer = NA,
+      correct_answer_ind = FALSE,
+      quiz_complete = FALSE
+    )
     
     # start timer
     active(TRUE)

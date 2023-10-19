@@ -23,15 +23,15 @@ mod_auth_info_server <- function(id){
     ns <- session$ns
 
     user_info <- reactive({
-      if (!is.null(session$userData$auth0_info)) {
-        info <- session$userData$auth0_info
-      } else {
+      if (getOption("auth0_disable")) {
         info <- list(
           sub = "devaccount|8675309",
           nickname = "the_blue_robot",
           name = "MegaMan",
           picture = "https://shinydevseries-assets.us-east-1.linodeobjects.com/megaman.png"
         )
+      } else {
+        info <- session$userData$auth0_info
       }
 
       return(info)
