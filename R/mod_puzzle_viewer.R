@@ -111,6 +111,8 @@ mod_puzzle_viewer_server <- function(
       tolower(input$answer) == tolower(answer$answer)
     })
 
+    # reactive for 
+
     if (includeTablePuzzle) {
       output$tablePuzzle <- DT::renderDT(
         DT::datatable(
@@ -130,8 +132,10 @@ mod_puzzle_viewer_server <- function(
     # Help Code
     observeEvent(input$help, {
       # add one to the help tracker
-      helpCount(helpCount() + 1)
-
+      if (helpCount() < length(clues)) {
+        helpCount(helpCount() + 1)
+      }
+      
       # make sure the maxCount is less than or equal to the number of clues
       maxCount <- min(helpCount(), length(clues))
 
@@ -139,6 +143,24 @@ mod_puzzle_viewer_server <- function(
       output$helptext <- renderUI({
         list_to_li(clues[1:maxCount])
       })
+
+      # send user answer data to database
+      add_user_data(
+        con,
+        user_nickname = user_info()$user_nickname,
+        user_name = user_info()$user_name,
+        user_picture = user_info()$user_picture,
+        session_timestamp = session_timestamp(),
+        event_type = "request_hint",
+        question_id = question_id,
+        question_time = question_time(),
+        overall_time = get_golem_config("quiz_time") - timer(),
+        hint_counter = helpCount(),
+        attempt_counter = NA,
+        user_answer = NA,
+        correct_answer_ind = FALSE,
+        quiz_complete = FALSE
+      )
 
       # display the hints
       shiny::showModal(
@@ -154,6 +176,35 @@ mod_puzzle_viewer_server <- function(
 
     observeEvent(input$submit, {
       req(current_tab())
+
+      tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+
+
+      # obtain current tab number if not in the intro, end, or fail tabs
+      if (!current_tab() %in% c('intro', 'fail', 'end')) {
+        tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+        if (correct_ind()) {
+          # move to end of puzzle if answered last question
+          if (tab_number == n_questions) {
+            next_tab <- 'end'
+            quiz_complete(TRUE)
+          } else {
+            next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+          }
+        }
+      }
+
+      # obtain the next tab to visit
+      # - if user answer is correct
+      #   - move to 'end' tab if already on the last question
+      #   - move to next question tab otherwise
+      #
+      # - if user answer is incorrect
+      #   - keep on the same tab
+
+
 
       if (!current_tab() %in% c('intro', 'fail', 'end')) {
         tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
