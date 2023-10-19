@@ -3,11 +3,14 @@ default:
   golem_version: 0.0.0.9000
   app_prod: no
   quiz_time: 60
+  penalty_time: 5
   db_type: LOCAL
+  allow_multiple_attempts: TRUE
 
 production:
   app_prod: yes
   quiz_time: 1200
+  penalty_time: 30
   db_type: SERVER
 
 dev:
