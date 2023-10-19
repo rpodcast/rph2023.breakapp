@@ -12,6 +12,7 @@ production:
   quiz_time: 1200
   penalty_time: 30
   db_type: SERVER
+  allow_multiple_attempts: FALSE
 
 dev:
   golem_wd: !expr golem::pkg_path()
