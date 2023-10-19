@@ -1,3 +1,8 @@
-# rph2023.breakapp (development version)
+# rph2023.breakapp 0.0.0.9002
 
-* Initial CRAN submission.
+* Streamline the user interface layout with `{bslib}`
+* Track a variety of escape room metrics for inclusion in postgres database
+
+# rph2023.breakapp 0.0.0.9000
+
+* Initial version

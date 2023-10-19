@@ -1,6 +1,6 @@
 Package: rph2023.breakapp
 Title: An Amazing Shiny App
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: 
     person("firstname", "lastname", , "your@email.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
