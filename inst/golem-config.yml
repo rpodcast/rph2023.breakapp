@@ -5,14 +5,21 @@ default:
   quiz_time: 60
   penalty_time: 0
   db_type: LOCAL
-  allow_multiple_attempts: TRUE
+  allow_multiple_attempts: yes
 
 production:
   app_prod: yes
   quiz_time: 1200
   penalty_time: 30
   db_type: SERVER
-  allow_multiple_attempts: FALSE
+  allow_multiple_attempts: no
+
+production-load-test:
+  app_prod: yes
+  quiz_time: 1200
+  penalty_time: 30
+  db_type: SERVER
+  allow_multiple_attempts: yes
 
 dev:
   golem_wd: !expr golem::pkg_path()
