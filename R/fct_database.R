@@ -44,9 +44,9 @@ create_user_table <- function(
       session_timestamp TIMESTAMPTZ,
       event_type VARCHAR,
       question_id VARCHAR,
-      question_time VARCHAR,
-      overall_time VARCHAR,
-      help_counter NUMERIC,
+      question_time NUMERIC,
+      overall_time NUMERIC,
+      hint_counter NUMERIC,
       attempt_counter NUMERIC,
       user_answer VARCHAR,
       correct_answer_ind BOOLEAN,
@@ -157,7 +157,7 @@ add_user_data <- function(
   question_id,
   question_time,
   overall_time,
-  help_counter,
+  hint_counter,
   attempt_counter,
   user_answer,
   correct_answer_ind,
@@ -165,7 +165,7 @@ add_user_data <- function(
   table_name = "userdata"
 ) {
 
-  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, event_type, question_id, question_time, overall_time, help_counter, attempt_counter, user_answer, quiz_complete)
+  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, event_type, question_id, question_time, overall_time, hint_counter, attempt_counter, user_answer, correct_answer_ind, quiz_complete)
   VALUES(
     {user_nickname},
     {user_name},
