@@ -17,9 +17,14 @@ mod_puzzle_conclusion_ui <- function(id, type = c("fail", "end")) {
     layout_columns(
       fill = FALSE,
       value_box(
-        title = "Escape Time",
+        title = "Time",
         value = textOutput(ns("escape_value"), inline = TRUE),
-        showcase = bsicons::bs_icon("door-open")
+        showcase = bsicons::bs_icon("hourglass-split")
+      ),
+      value_box(
+        title = "Rooms Escaped",
+        value = textOutput(ns("correct_value"), inline = TRUE),
+        showcase = bsicons::bs_icon("unlock")
       ),
       value_box(
         title = "Total Hints",
@@ -27,7 +32,7 @@ mod_puzzle_conclusion_ui <- function(id, type = c("fail", "end")) {
         showcase = bsicons::bs_icon("info-circle")
       ),
       value_box(
-        title = "Attempts",
+        title = "Incorrect Attempts",
         value = textOutput(ns("attempts_value"), inline = TRUE),
         showcase = bsicons::bs_icon("x-octagon")
       )
@@ -54,6 +59,11 @@ mod_puzzle_conclusion_server <- function(id, con, user_info, show_result){
     output$escape_value <- renderText({
       req(user_metrics())
       prettyunits::pretty_sec(user_metrics()$total_time)
+    })
+
+    output$correct_value <- renderText({
+      req(user_metrics())
+      prettyNum(user_metrics()$total_correct)
     })
 
     output$hints_value <- renderText({

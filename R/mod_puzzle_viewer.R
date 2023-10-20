@@ -111,7 +111,22 @@ mod_puzzle_viewer_server <- function(
       tolower(input$answer) == tolower(answer$answer)
     })
 
-    # reactive for 
+    # reactive for next tab
+    next_tab <- reactive({
+      req(current_tab())
+      tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+      if (tab_number == n_questions) {
+        if (correct_ind()) {
+          next_tab <- 'end'
+        } else {
+          next_tab <- 'fail'
+        }
+      } else {
+        next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+      }
+      return(next_tab)
+    })
 
     if (includeTablePuzzle) {
       output$tablePuzzle <- DT::renderDT(
@@ -176,94 +191,144 @@ mod_puzzle_viewer_server <- function(
 
     observeEvent(input$submit, {
       req(current_tab())
+      req(next_tab())
 
-      tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+      # increment attempts
+      attempts(attempts() + 1)
 
-
-
-      # obtain current tab number if not in the intro, end, or fail tabs
-      if (!current_tab() %in% c('intro', 'fail', 'end')) {
-        tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
-
-        if (correct_ind()) {
-          # move to end of puzzle if answered last question
-          if (tab_number == n_questions) {
-            next_tab <- 'end'
-            quiz_complete(TRUE)
-          } else {
-            next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
-          }
-        }
+      if (next_tab() == 'end') {
+        quiz_complete(TRUE)
       }
 
-      # obtain the next tab to visit
-      # - if user answer is correct
-      #   - move to 'end' tab if already on the last question
-      #   - move to next question tab otherwise
-      #
-      # - if user answer is incorrect
-      #   - keep on the same tab
+      # send user answer data to database
+      add_user_data(
+        con,
+        user_nickname = user_info()$user_nickname,
+        user_name = user_info()$user_name,
+        user_picture = user_info()$user_picture,
+        session_timestamp = session_timestamp(),
+        event_type = "submit_answer",
+        question_id = question_id,
+        question_time = question_time(),
+        overall_time = get_golem_config("quiz_time") - timer(),
+        hint_counter = helpCount(),
+        attempt_counter = attempts(),
+        user_answer = input$answer,
+        correct_answer_ind = correct_ind(),
+        quiz_complete = quiz_complete()
+      )
 
+      if (correct_ind()) {
+        # reset individual question elapsed time
+        question_time(0)
 
+        # send notification to user
+        shinypop::noty(text = "Correct answer!", timeout = 500, type= "success", layout = "center", killer = TRUE)
 
-      if (!current_tab() %in% c('intro', 'fail', 'end')) {
-        tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+        # switch to next tab in escape room tab panel
+        nav_select(
+          session = parent_session,
+          id = "tabs",
+          selected = next_tab()
+        )
+      } else {
+        # track incorrect answer
+        prev_answers(c(prev_answers(), input$answer))
 
-        if (correct_ind()) {
-          # move to end of puzzle if answered last question
-          if (tab_number == n_questions) {
-            next_tab <- 'end'
-            quiz_complete(TRUE)
-          } else {
-            next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
-            quiz_complete(FALSE)
-          }
-
-          # send user answer data to database
-          add_user_data(
-            con,
-            user_nickname = user_info()$user_nickname,
-            user_name = user_info()$user_name,
-            user_picture = user_info()$user_picture,
-            session_timestamp = session_timestamp(),
-            question_id = question_id,
-            question_time = question_time(),
-            overall_time = get_golem_config("quiz_time") - timer(),
-            help_count = helpCount(),
-            attempts = attempts(),
-            quiz_complete = quiz_complete()
-          )
-
-          # reset individual question elapsed time
-          question_time(0)
-
-          # send notification to user
-          shinypop::noty(text = "Correct answer!", timeout = 500, type= "success", layout = "center", killer = TRUE)
-
-          # switch to next tab in escape room tab panel
-          nav_select(
-            session = parent_session,
-            id = "tabs",
-            selected = next_tab
-          )
-        } else {
-          # track incorrect answer
-          prev_answers(c(prev_answers(), input$answer))
-
-          # increment attempts
-          attempts(attempts() + 1)
-
-          # clear the answer text input
-          updateTextInput(
-            session = session,
-            inputId = "answer",
-            value = "",
-            placeholder = "Enter answer here"
-          )
-          # send notification to user
-          shinypop::noty(text = "Incorrect! Try again...", timeout = 1000, type= "error", layout = "center", killer = TRUE)
-        }
+        # clear the answer text input
+        updateTextInput(
+          session = session,
+          inputId = "answer",
+          value = "",
+          placeholder = "Enter answer here"
+        )
+        # send notification to user
+        shinypop::noty(text = "Incorrect! Try again...", timeout = 1000, type= "error", layout = "center", killer = TRUE)
       }
+
+      # # obtain current tab number if not in the intro, end, or fail tabs
+      # if (!current_tab() %in% c('intro', 'fail', 'end')) {
+      #   tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+      #   if (correct_ind()) {
+      #     # move to end of puzzle if answered last question
+      #     if (tab_number == n_questions) {
+      #       next_tab <- 'end'
+      #       quiz_complete(TRUE)
+      #     } else {
+      #       next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+      #     }
+      #   }
+      # }
+
+      # # obtain the next tab to visit
+      # # - if user answer is correct
+      # #   - move to 'end' tab if already on the last question
+      # #   - move to next question tab otherwise
+      # #
+      # # - if user answer is incorrect
+      # #   - keep on the same tab
+
+
+
+      # if (!current_tab() %in% c('intro', 'fail', 'end')) {
+      #   tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+      #   if (correct_ind()) {
+      #     # move to end of puzzle if answered last question
+      #     if (tab_number == n_questions) {
+      #       next_tab <- 'end'
+      #       quiz_complete(TRUE)
+      #     } else {
+      #       next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+      #       quiz_complete(FALSE)
+      #     }
+
+      #     # send user answer data to database
+      #     add_user_data(
+      #       con,
+      #       user_nickname = user_info()$user_nickname,
+      #       user_name = user_info()$user_name,
+      #       user_picture = user_info()$user_picture,
+      #       session_timestamp = session_timestamp(),
+      #       question_id = question_id,
+      #       question_time = question_time(),
+      #       overall_time = get_golem_config("quiz_time") - timer(),
+      #       help_count = helpCount(),
+      #       attempts = attempts(),
+      #       quiz_complete = quiz_complete()
+      #     )
+
+      #     # reset individual question elapsed time
+      #     question_time(0)
+
+      #     # send notification to user
+      #     shinypop::noty(text = "Correct answer!", timeout = 500, type= "success", layout = "center", killer = TRUE)
+
+      #     # switch to next tab in escape room tab panel
+      #     nav_select(
+      #       session = parent_session,
+      #       id = "tabs",
+      #       selected = next_tab
+      #     )
+      #   } else {
+      #     # track incorrect answer
+      #     prev_answers(c(prev_answers(), input$answer))
+
+      #     # increment attempts
+      #     attempts(attempts() + 1)
+
+      #     # clear the answer text input
+      #     updateTextInput(
+      #       session = session,
+      #       inputId = "answer",
+      #       value = "",
+      #       placeholder = "Enter answer here"
+      #     )
+      #     # send notification to user
+      #     shinypop::noty(text = "Incorrect! Try again...", timeout = 1000, type= "error", layout = "center", killer = TRUE)
+      #   }
+      # }
     })
 
     # return answer status
