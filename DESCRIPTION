@@ -19,11 +19,13 @@ Imports:
     jsonlite,
     lubridate,
     pool,
+    prettyunits,
     purrr,
     RPostgres,
     shiny (>= 1.7.5),
     shinypop,
-    stringr
+    stringr,
+    tibble
 Remotes:
     dreamRs/shinypop
 Encoding: UTF-8
