@@ -22,7 +22,7 @@ attachment::att_amend_desc()
 ## Create a module infrastructure in R/
 golem::add_module(name = "auth_info", with_test = FALSE)
 golem::add_module(name = "puzzle_viewer", fct = "helpers", with_test = FALSE)
-golem::add_module(name = "name_of_module2", with_test = TRUE) # Name of the module
+golem::add_module(name = "puzzle_conclusion", fct = "helpers", with_test = FALSE) # Name of the module
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

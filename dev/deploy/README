@@ -1,1 +1,4 @@
-Use this directory to store the containerized versions of the application for deployment on hosted infrastructure. Refer to the `dev/README.md` document for instructions.
+docker build -f Dockerfile_base --progress=plain -t rph2023.breakapp_base .
+docker build -f Dockerfile --progress=plain -t rph2023.breakapp:latest .
+docker run -p 80:80 rph2023.breakapp:latest
+# then go to 127.0.0.1:80

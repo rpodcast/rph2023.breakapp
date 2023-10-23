@@ -1,4 +1,4 @@
-FROM rph2023.breakapp_base
+FROM rpodcast/rph2023.breakapp_base
 COPY renv.lock.prod renv.lock
 RUN R -e 'renv::restore()'
 COPY rph2023.breakapp_*.tar.gz /app.tar.gz

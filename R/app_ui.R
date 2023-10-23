@@ -3,49 +3,46 @@
 #' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import bslib
 #' @noRd
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(
-      #mod_auth_info_ui("auth_info_1")
-      h1("Escape the RPH2023"),
-      
-      tabsetPanel(
-        id = 'tabs',
-        type = 'hidden',
+    page_navbar(
+      title = "RPH2023 Escape App",
+      id = "navbar",
+      inverse = FALSE,
 
-        # welcome tab
-        tabPanel(
-          title = 'Welcome to the escape room',
-          value = "intro",
-          column(
-            width = 10,
-            shiny::img(src = 'www/images/intro.jpeg')
-          ),
-          column(
-            width = 2,
-            actionButton(
-              'start',
-              label = 'Start',
-              icon = shiny::icon('hourglass-start')
-            ),
-            actionButton(
-              'info',
-              label = 'Instructions',
-              icon = shiny::icon('info')
-            ),
-            mod_auth_info_ui("auth_info_1")
+      nav_panel(
+        title = "",
+        value = 'intro',
+        navset_hidden(
+          id = 'tabs',
+          nav_panel_hidden(
+            value = "intro",
+            card(
+              full_screen = FALSE,
+              card_body(
+                h2("Welcome to the Escape Room"),
+                shiny::img(src = 'www/images/intro.jpeg')
+              )
+            )
           )
-        ),
-
-        # time display
-        footer = tagList(
-          textOutput('time_message'),
-          actionButton("submit", label = "Submit")
         )
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('n_rooms')
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('hints_message')
+      ),
+      nav_spacer(),
+      nav_item(
+        textOutput('time_message')
       )
     )
   )
@@ -70,8 +67,9 @@ golem_add_external_resources <- function() {
     bundle_resources(
       path = app_sys("app/www"),
       app_title = "rph2023.breakapp"
-    )
+    ),
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
+    shinypop::use_noty(maxVisible = 3)
   )
 }
