@@ -1,10 +1,10 @@
 # ensure .Renviron has the proper environment variables set up prior to executing the code below
 
 # development mode (use local Docker PostgreSQL container)
-#Sys.setenv(R_CONFIG_ACTIVE = "default")
+Sys.setenv(R_CONFIG_ACTIVE = "default")
 
 # production mode (use hosted PostgreSQL on Digital Ocean)
-Sys.setenv(R_CONFIG_ACTIVE = "production")
+#Sys.setenv(R_CONFIG_ACTIVE = "production")
 
 library(DBI)
 library(RPostgres)

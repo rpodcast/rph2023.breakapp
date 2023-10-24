@@ -113,19 +113,27 @@ mod_puzzle_viewer_server <- function(
       tolower(input$answer) == tolower(answer$answer)
     })
 
-    # reactive for next tab
-    next_tab <- reactive({
+    # reactive for tab index
+    current_tab_index <- reactive({
       req(current_tab())
       tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+      return(tab_number)
+    })
 
-      if (tab_number == n_questions) {
+    # reactive for next tab
+    next_tab <- reactive({
+      req(current_tab_index())
+      #req(current_tab())
+      #tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+      if (current_tab_index() == n_questions) {
         if (correct_ind()) {
           next_tab <- 'end'
         } else {
           next_tab <- 'fail'
         }
       } else {
-        next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+        next_tab <- glue::glue("puzzle{current_tab_index() + 1}_tab")
       }
       return(next_tab)
     })
@@ -203,6 +211,7 @@ mod_puzzle_viewer_server <- function(
 
     observeEvent(input$submit, {
       req(current_tab())
+      req(current_tab_index())
       req(next_tab())
 
       # increment attempts
@@ -211,6 +220,9 @@ mod_puzzle_viewer_server <- function(
       if (next_tab() == 'end') {
         quiz_complete(TRUE)
       }
+
+      # derive percent complete
+      proportion_complete <- ifelse(correct_ind(), current_tab_index() / n_questions, (current_tab_index() - 1) / n_questions)
 
       # send user answer data to database
       add_user_data(
@@ -227,6 +239,7 @@ mod_puzzle_viewer_server <- function(
         attempt_counter = attempts(),
         user_answer = input$answer,
         correct_answer_ind = correct_ind(),
+        proportion_complete = proportion_complete,
         quiz_complete = quiz_complete()
       )
 

@@ -295,6 +295,7 @@ app_server <- function(input, output, session) {
       attempt_counter = 0,
       user_answer = NA,
       correct_answer_ind = FALSE,
+      proportion_complete = 0,
       quiz_complete = FALSE
     )
     
