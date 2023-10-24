@@ -22,17 +22,7 @@ mod_puzzle_viewer_ui <- function(
         src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg")
       )
     ),
-    if (includeTablePuzzle) {
-      layout_columns(
-        # for some puzzles we have a reactable
-        DT::DTOutput(
-          outputId = ns("tablePuzzle")
-          #height="75%",
-          #width="75%"
-        )
-      )
-    },
-
+    uiOutput(ns("table_placeholder")),
     layout_columns(
       uiOutput(ns("answerUI")),
       actionButton(
@@ -45,7 +35,6 @@ mod_puzzle_viewer_ui <- function(
         icon = shiny::icon("circle-question")
       )
     ),
-
     layout_columns(
       uiOutput(ns("prev_answers_display"))
     )
@@ -85,6 +74,19 @@ mod_puzzle_viewer_server <- function(
 
     # escape room as complete or not
     quiz_complete <- reactiveVal(FALSE)
+
+    # render table if requested
+    output$table_placeholder <- renderUI({
+      if (includeTablePuzzle) {
+        tagList(
+          DT::DTOutput(
+            outputId = ns("tablePuzzle"),
+            height = "75%",
+            width = "75%"
+          )
+        )
+      }
+    })
 
     # create user input for answering puzzle
     output$answerUI <- shiny::renderUI(
@@ -129,19 +131,29 @@ mod_puzzle_viewer_server <- function(
     })
 
     if (includeTablePuzzle) {
-      output$tablePuzzle <- DT::renderDT(
+      output$tablePuzzle <- DT::renderDT({
+        df <- data.frame(
+          a = rep(' ',5),
+          b = rep(' ',5),
+          c = rep(' ',5)
+        )
+
         DT::datatable(
-          data = data.frame(
-            a = rep('',5),
-            b = rep('',5),
-            c = rep('',5)
+          df,
+          style = 'bootstrap4',
+          rownames = TRUE,
+          options = list(
+            dom = 't',
+            columnDefs = list(
+              list(
+                className = 'dt-center',
+                targets = '_all'
+              )
+            )
           ),
-          options = list(dom = 't'),
-          selection = list(target = "cell", mode = "multiple"),
-          rownames = FALSE
-        ),
-        server = FALSE
-      )
+          selection = list(target = 'cell')
+        )
+      }, server = TRUE)
     }
 
     # Help Code
