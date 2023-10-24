@@ -1,6 +1,6 @@
 default:
   golem_name: rph2023.breakapp
-  golem_version: 0.1
+  golem_version: 0.2
   app_prod: no
   quiz_time: 60
   penalty_time: 0

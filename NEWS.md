@@ -1,3 +1,7 @@
+# rph2023.breakapp 0.2
+
+* Fix bug with proportion complete field in hint observeEvent
+
 # rph2023.breakapp 0.1
 
 * Fix issue with cell-clicks inside a `{DT}` table. Solution was to specify `style = 'bootstrap4'` in the DT call.

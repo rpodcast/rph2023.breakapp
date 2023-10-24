@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for rph2023breakapp on 2023-10-20T13:58:43-04:00
+# fly.toml app configuration file generated for rph2023breakapp on 2023-10-24T09:54:25-04:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,7 +7,7 @@ app = "rph2023breakapp"
 primary_region = "bos"
 
 [build]
-  image = "rpodcast/rph2023.breakapp"
+  image = "rpodcast/rph2023.breakapp:v1"
 
 [http_service]
   internal_port = 2550

@@ -1,6 +1,6 @@
 Package: rph2023.breakapp
 Title: The RPharma 2023 Escape Room App
-Version: 0.1
+Version: 0.2
 Authors@R: c(
     person("Eric", "Nantz", , "theRcast@gmail.com", role = c("aut", "cre")),
     person("Jenna", "Reps", , "reps12@hotmail.com", role = c("aut"))

@@ -191,7 +191,9 @@ mod_puzzle_viewer_server <- function(
         hint_counter = helpCount(),
         attempt_counter = NA,
         user_answer = NA,
+        proportion_complete = NA,
         correct_answer_ind = FALSE,
+
         quiz_complete = FALSE
       )
 
