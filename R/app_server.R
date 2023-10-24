@@ -128,16 +128,15 @@ app_server <- function(input, output, session) {
           shiny::p(
             "You can use (and will need to use) the internet to help solve some puzzles."
           ),
-          size = c("m"), # could try "s"
-          easyClose = TRUE,
+          size = c("l"), # could try "s"
+          easyClose = FALSE,
           fade = TRUE,
           footer = tagList(
             actionButton(
               inputId = 'start',
               label = 'Start',
               icon = shiny::icon('hourglass-start')
-            ),
-            modalButton("Get me out of here!")
+            )
           )
         )
       )
