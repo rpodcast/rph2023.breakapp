@@ -59,7 +59,8 @@ app_server <- function(input, output, session) {
               mod_puzzle_viewer_ui(
                 glue::glue("puzzle_viewer_{.x}"),
                 titleText = quiz_sub$titletext,
-                puzzleImageSrc = extract_image_file(quiz_sub$image_blob, quiz_sub$image_filename)
+                puzzleImageSrc = extract_image_file(quiz_sub$image_blob, quiz_sub$image_filename),
+                includeTablePuzzle = quiz_sub$includetablepuzzle
               )
             )
           )
@@ -167,7 +168,8 @@ app_server <- function(input, output, session) {
       question_id = quiz_sub$id,
       parent_session = session,
       current_tab = current_tab,
-      n_questions = n_questions
+      n_questions = n_questions,
+      includeTablePuzzle = quiz_sub$includetablepuzzle
     )
   })
 
@@ -293,6 +295,7 @@ app_server <- function(input, output, session) {
       attempt_counter = 0,
       user_answer = NA,
       correct_answer_ind = FALSE,
+      proportion_complete = 0,
       quiz_complete = FALSE
     )
     

@@ -50,6 +50,7 @@ create_user_table <- function(
       attempt_counter NUMERIC,
       user_answer VARCHAR,
       correct_answer_ind BOOLEAN,
+      proportion_complete NUMERIC,
       quiz_complete BOOLEAN
     );")
   )
@@ -161,11 +162,12 @@ add_user_data <- function(
   attempt_counter,
   user_answer,
   correct_answer_ind,
+  proportion_complete,
   quiz_complete,
   table_name = "userdata"
 ) {
 
-  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, event_type, question_id, question_time, overall_time, hint_counter, attempt_counter, user_answer, correct_answer_ind, quiz_complete)
+  user_query <- "INSERT INTO {`table_name`} (user_nickname, user_name, user_picture, session_timestamp, event_type, question_id, question_time, overall_time, hint_counter, attempt_counter, user_answer, correct_answer_ind, proportion_complete, quiz_complete)
   VALUES(
     {user_nickname},
     {user_name},
@@ -179,6 +181,7 @@ add_user_data <- function(
     {attempt_counter},
     {user_answer},
     {correct_answer_ind},
+    {proportion_complete},
     {quiz_complete}
   );"
 

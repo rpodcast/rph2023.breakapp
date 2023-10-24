@@ -22,17 +22,7 @@ mod_puzzle_viewer_ui <- function(
         src = base64enc::dataURI(file = puzzleImageSrc, mime = "image/jpeg")
       )
     ),
-    if (includeTablePuzzle) {
-      layout_columns(
-        # for some puzzles we have a reactable
-        DT::DTOutput(
-          outputId = ns("tablePuzzle")
-          #height="75%",
-          #width="75%"
-        )
-      )
-    },
-
+    uiOutput(ns("table_placeholder")),
     layout_columns(
       uiOutput(ns("answerUI")),
       actionButton(
@@ -45,7 +35,6 @@ mod_puzzle_viewer_ui <- function(
         icon = shiny::icon("circle-question")
       )
     ),
-
     layout_columns(
       uiOutput(ns("prev_answers_display"))
     )
@@ -86,6 +75,19 @@ mod_puzzle_viewer_server <- function(
     # escape room as complete or not
     quiz_complete <- reactiveVal(FALSE)
 
+    # render table if requested
+    output$table_placeholder <- renderUI({
+      if (includeTablePuzzle) {
+        tagList(
+          DT::DTOutput(
+            outputId = ns("tablePuzzle"),
+            height = "75%",
+            width = "75%"
+          )
+        )
+      }
+    })
+
     # create user input for answering puzzle
     output$answerUI <- shiny::renderUI(
       tagList(
@@ -111,37 +113,55 @@ mod_puzzle_viewer_server <- function(
       tolower(input$answer) == tolower(answer$answer)
     })
 
-    # reactive for next tab
-    next_tab <- reactive({
+    # reactive for tab index
+    current_tab_index <- reactive({
       req(current_tab())
       tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+      return(tab_number)
+    })
 
-      if (tab_number == n_questions) {
+    # reactive for next tab
+    next_tab <- reactive({
+      req(current_tab_index())
+      #req(current_tab())
+      #tab_number <- as.integer(stringr::str_extract(current_tab(), "\\d+"))
+
+      if (current_tab_index() == n_questions) {
         if (correct_ind()) {
           next_tab <- 'end'
         } else {
           next_tab <- 'fail'
         }
       } else {
-        next_tab <- glue::glue("puzzle{tab_number + 1}_tab")
+        next_tab <- glue::glue("puzzle{current_tab_index() + 1}_tab")
       }
       return(next_tab)
     })
 
     if (includeTablePuzzle) {
-      output$tablePuzzle <- DT::renderDT(
+      output$tablePuzzle <- DT::renderDT({
+        df <- data.frame(
+          a = rep(' ',5),
+          b = rep(' ',5),
+          c = rep(' ',5)
+        )
+
         DT::datatable(
-          data = data.frame(
-            a = rep('',5),
-            b = rep('',5),
-            c = rep('',5)
+          df,
+          style = 'bootstrap4',
+          rownames = TRUE,
+          options = list(
+            dom = 't',
+            columnDefs = list(
+              list(
+                className = 'dt-center',
+                targets = '_all'
+              )
+            )
           ),
-          options = list(dom = 't'),
-          selection = list(target = "cell", mode = "multiple"),
-          rownames = FALSE
-        ),
-        server = FALSE
-      )
+          selection = list(target = 'cell')
+        )
+      }, server = TRUE)
     }
 
     # Help Code
@@ -191,6 +211,7 @@ mod_puzzle_viewer_server <- function(
 
     observeEvent(input$submit, {
       req(current_tab())
+      req(current_tab_index())
       req(next_tab())
 
       # increment attempts
@@ -199,6 +220,9 @@ mod_puzzle_viewer_server <- function(
       if (next_tab() == 'end') {
         quiz_complete(TRUE)
       }
+
+      # derive percent complete
+      proportion_complete <- ifelse(correct_ind(), current_tab_index() / n_questions, (current_tab_index() - 1) / n_questions)
 
       # send user answer data to database
       add_user_data(
@@ -215,6 +239,7 @@ mod_puzzle_viewer_server <- function(
         attempt_counter = attempts(),
         user_answer = input$answer,
         correct_answer_ind = correct_ind(),
+        proportion_complete = proportion_complete,
         quiz_complete = quiz_complete()
       )
 
