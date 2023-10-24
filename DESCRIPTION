@@ -3,10 +3,10 @@ Title: The RPharma 2023 Escape Room App
 Version: 0.2
 Authors@R: c(
     person("Eric", "Nantz", , "theRcast@gmail.com", role = c("aut", "cre")),
-    person("Jenna", "Reps", , "reps12@hotmail.com", role = c("aut"))
+    person("Jenna", "Reps", , "reps12@hotmail.com", role = "aut")
   )
-Description: A custom Shiny application challenging the user to escape
-    a virtual set of rooms.
+Description: A custom Shiny application challenging the user to escape a
+    virtual set of rooms.
 License: MIT + file LICENSE
 Imports: 
     auth0,
