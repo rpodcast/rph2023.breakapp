@@ -38,7 +38,6 @@ mod_puzzle_conclusion_ui <- function(id, type = c("fail", "end")) {
       )
     ),
     shiny::img(src = file.path("www/images", image_file))
-    #DT::DTOutput(ns("metrics_table"))
   )
 }
     
@@ -75,11 +74,6 @@ mod_puzzle_conclusion_server <- function(id, con, user_info, show_result){
       req(user_metrics())
       prettyNum(user_metrics()$total_incorrect_attempts)
     })
-
-    # output$metrics_table <- DT::renderDT({
-    #   req(user_metrics())
-    #   user_metrics()
-    # })
   })
 }
     
