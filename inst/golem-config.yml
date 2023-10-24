@@ -10,14 +10,14 @@ default:
 production:
   app_prod: yes
   quiz_time: 1200
-  penalty_time: 30
+  penalty_time: 60
   db_type: SERVER
   allow_multiple_attempts: no
 
 production-load-test:
   app_prod: yes
   quiz_time: 1200
-  penalty_time: 30
+  penalty_time: 60
   db_type: SERVER
   allow_multiple_attempts: yes
 
